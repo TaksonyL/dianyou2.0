@@ -1,0 +1,96 @@
+{
+	"pages": [
+		{
+			"path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "首页"
+      }
+		},
+    {
+      "path": "pages/setting/index",
+      "style": {
+        "navigationBarTitleText": "设置"
+      }
+    },
+    {
+      "path": "pages/order/index",
+      "style": {
+        "navigationBarTitleText": "订单"
+      }
+    },
+    {
+      "path": "pages/goods_detail/index",
+      "style": {
+        "navigationBarTitleText": "商品详情"
+      }
+    },
+    {
+      "path": "pages/goods_change/index",
+      "style": {
+        "navigationBarTitleText": "商品置换"
+      }
+    },
+    {
+      "path": "pages/pay/index",
+      "style": {
+        "navigationBarTitleText": "支付页面",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/pay_status/index",
+      "style": {
+        "navigationBarTitleText": "支付完成",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/manager/index",
+      "style": {
+        "navigationBarTitleText": "绑定补货员",
+        "navigationBarTextStyle": "white"
+      }
+    }
+	],
+	"globalStyle": {
+    "navigationStyle": "custom",
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "电友",
+    "navigationBarBackgroundColor": "#ffffff",
+		"backgroundColor": "#F8F8F8",
+    "mp-alipay": {
+      "allowsBounceVertical": "NO"
+
+    }
+	},
+  "tabBar": {
+    "color": "#808080",
+    "selectedColor": "#a64240",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "static/images/home.png",
+        "selectedIconPath": "static/images/home_active.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/setting/index",
+        "iconPath": "static/images/setting.png",
+        "selectedIconPath": "static/images/setting_active.png",
+        "text": "设置"
+      },
+      {
+        "pagePath": "pages/order/index",
+        "iconPath": "static/images/order.png",
+        "selectedIconPath": "static/images/order_active.png",
+        "text": "订单"
+      }
+    ]
+  },
+  "easycom": {
+    "^u-(.*)": "uview-ui/components/u-$1/u-$1.vue"
+  }
+}
