@@ -46,7 +46,7 @@ export async function findBT () {
   if(!BluetoothModule.localName) {
     console.log('搜索设备号为空')
     return
-  } else if (BluetoothModule.launch) {
+  } else if (!BluetoothModule.launch) {
     console.log('蓝牙未打开')
     return
   }
@@ -79,7 +79,39 @@ export function searchBT () {
       interval: 2000,
       success(res) {
         CommonModule.SET_FINDBT(false);
+
+        //#ifdef MP-ALIPAY
+        uni.getBluetoothDevices({
+          success(dev) {
+            for(let item of dev.devices) {
+              if(item.localName === BluetoothModule.localName) {
+                console.log(dev, '找到设备', BluetoothModule.localName)
+                uni.hideLoading();
+                // 匹配成功 (关闭功能)
+                uni.stopBluetoothDevicesDiscovery({});
+                // 返回设备信息
+                resolve(item);
+              }
+            }
+            // 搜索匹配设备
+            uni.onBluetoothDeviceFound((result) => {
+              for(let item of result.devices) {
+                if(item.localName === BluetoothModule.localName) {
+                  console.log(result, '找到设备', BluetoothModule.localName)
+                  uni.hideLoading();
+                  // 匹配成功 (关闭功能)
+                  uni.stopBluetoothDevicesDiscovery({});
+                  // 返回设备信息
+                  resolve(item);
+                }
+              }
+            })
+          }
+        })
+        //#endif
+
         // 搜索匹配设备
+        //#ifdef  MP-WEIXIN
         uni.onBluetoothDeviceFound((result) => {
           for(let item of result.devices) {
             if(item.localName === BluetoothModule.localName) {
@@ -92,6 +124,7 @@ export function searchBT () {
             }
           }
         })
+        //#endif
 
       },
       fail(err) {
@@ -195,9 +228,10 @@ export function connectBT (deviceId:string) {
 export async function reconnectBT(refind:boolean = false) {
   if(CommonModule.unLoad) {
     CommonModule.SET_UNLOAD(false);
+    if(CommonModule.connect) return;
     if(CommonModule.payTime) {
       // 支付保持连接
-      CommonModule.SET_PAYTIME(false)
+      // CommonModule.SET_PAYTIME(false)
     } else {
       if(BluetoothModule.launch && BluetoothModule.auth) {
 

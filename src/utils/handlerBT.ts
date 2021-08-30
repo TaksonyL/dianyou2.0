@@ -10,10 +10,11 @@ import { CommonModule } from '@/store/modules/common';
  */
 export async function writeBT(serviceId:string, characteristicId:string, value:string) {
   if(!CommonModule.connect) {
+    uni.hideLoading();
     uni.showModal({
       title: '提示',
-      content: '蓝牙异常，请重连',
-      showCancel: false,
+      content: '蓝牙已断开，请重连',
+      showCancel: false
     })
     return
   }
@@ -55,6 +56,7 @@ export async function listenBT(serviceId:string, characteristicId:string) {
         resolve(res)
       },
       fail(err) {
+        console.log(err, '蓝牙监听失败')
         reject(err);
       }
     })  
@@ -93,7 +95,7 @@ export function charactBT(deviceId:string, serviceId:string) {
         resolve(res)
       },
       fail(err) {
-        console.log(err)
+        console.log(err, serviceId)
         reject(err)
       }
     })

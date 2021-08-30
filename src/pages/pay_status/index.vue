@@ -34,9 +34,9 @@
     </view>
 
     <view class="btnWrap">
-      <navigator url="/pages/index/index" open-type="switchTab" hover-class="none">
-        <view class="btn back-red">返回首页</view>
-      </navigator>
+      <!-- <navigator url="/pages/index/index" open-type="switchTab" hover-class="none"> -->
+      <view class="btn back-red" @click="goHome">返回首页</view>
+      <!-- </navigator> -->
     </view>
   </view>
 </template>
@@ -61,6 +61,15 @@ export default class extends Vue{
   onLoad() {
     let date = new Date();
     this.nowTime = formatTime(date); 
+  }
+
+  goHome() {
+    uni.switchTab({
+      url: '/pages/index/index',
+      fail(err) {
+        console.log(err)
+      }
+    })
   }
 }
 </script>

@@ -12,10 +12,13 @@
 
   @Component
 	export default class extends Vue{
-    @Prop({ default:100 }) number!:number|string;
+    @Prop({ default:'?' }) number!:number|string;
 
     // 颜色变化
     private color(num:number|string):string {
+      if(num === '?') {
+        return '#808080';
+      }
       num = Number(num);
       let val = '#fa5151';
       if(num<60 && num>20) {

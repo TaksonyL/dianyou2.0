@@ -38,6 +38,7 @@ import { reconnectBT } from '@/utils/bluetooth';
 })
 export default class extends Vue{
   private channelId:number = 0;
+  private code:number = 0;
   private goodlist:Array<object> = [];
   private imgUrl:string = CommonModule.imgUrl;
 
@@ -55,15 +56,24 @@ export default class extends Vue{
    * 置换商品
    */
   changeGood(e:any) {
-    console.log(e)
+    let that = this;
     let goodsId = e.currentTarget.dataset.goodsid;
     let data = {
       channel_id: this.channelId,
       goods_id:　goodsId
     }
     changeGood(data).then(res => {
+      that.emitCode()
       uni.navigateBack({})
     })
+  }
+
+  //返回补货参数
+  emitCode() {
+    let pages = getCurrentPages();
+    let prevPage = pages[pages.length - 2];
+    //@ts-ignore
+    prevPage.$vm.goodsChangeChannel = this.code
   }
 
   /**
@@ -72,6 +82,7 @@ export default class extends Vue{
   onLoad(options:any) {
     if(options.channelId > 0) {
       this.channelId = options.channelId
+      this.code = options.code
     } else {
       uni.showToast({
         title: '暂无货道信息',

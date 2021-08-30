@@ -12,7 +12,7 @@
         <view class="name">{{goodDetail.goods_name}}</view>
         <view class="info">
           <view class="price font-red">¥{{goodDetail.goods_retail_price}}</view>
-          <view class="stock font-gray">剩余库存：1件</view>
+          <view class="stock font-gray">剩余库存：{{stock}}件</view>
         </view>
       </view>
       <view class="goodsContent">
@@ -96,8 +96,18 @@ export default class extends Vue{
         }
       ]
     }
+    this.emitCode();
     buy(data, price);
   }
+
+  //返回补货参数
+  emitCode() {
+    let pages = getCurrentPages();
+    let prevPage = pages[pages.length - 2];
+    //@ts-ignore
+    prevPage.$vm.goodsUpdate = true
+  }
+
 
   /**
    * 成人验证

@@ -44,11 +44,11 @@
 
     <view class="goodlist p30">
 
-    <block v-for="item in goodlist" :key="item.channel_id">
+    <block v-for="item in goodlistFilter" :key="item.channel_id">
       <navigator  class="item" :url="'/pages/goods_detail/index?id=' + item.channel_goods_id + '&channelId=' + item.channel_id + '&stock=' + item.channel_stock" hover-class="none">
         <view class="imgWrap">
-          <image :class="{ saleOut:item.channel_stock === 0 }" v-if="item.goods_pic" :src="imgUrl + item.goods_pic" mode="widthFix"></image>
-          <image v-else src="/static/images/product.png" mode="widthFix"></image>
+          <image :class="{ saleOut:item.channel_stock === 0 }" v-if="item.goods_pic" :src="imgUrl + item.goods_pic" mode="aspectFit"></image>
+          <image v-else src="/static/images/product.png" mode="aspectFit"></image>
           <image v-if="item.channel_stock === 0" class="saleOutImg" src="/static/images/sale_out.png" mode="widthFix" />
         </view>
         <view class="textWrap">
@@ -58,8 +58,10 @@
             <view :class="[item.channel_stock === 0 ? 'buy back-gray' : 'buy back-red']" @click.stop="purchase" :data-stock="item.channel_stock" :data-channelid="item.channel_id" :data-price="item.goods_price">购买</view>
           </view>
           <view v-if="userType === 1" class="manager">
-            <view class="btn back-blue" @click.stop="goodChange" :data-channelid="item.channel_id" :data-code="item.channel_code">置换商品</view>
-            <view class="btn back-blue" @click.stop="replenish" :data-code="item.channel_code" :data-stock="item.channel_stock">货道补货</view>
+            <view :class="[item.channel_status === 1? 'btn back-blue' : 'btn back-gray']" @click.stop="goodChange"
+             :data-status="item.channel_status" :data-channelid="item.channel_id" :data-code="item.channel_code">置换商品</view>
+            <view :class="[item.channel_status === 1? 'btn back-blue' : 'btn back-gray']" @click.stop="replenish"
+             :data-status="item.channel_status" :data-code="item.channel_code" :data-stock="item.channel_stock">货道补货</view>
           </view>
         </view>
       </navigator>
@@ -106,7 +108,7 @@
 	export default class extends Vue{
     bluetooth:boolean = false;        // 是否打开蓝牙
     deviceCode:string|null = null;    // 设备编号
-    battery:number = 100;              // 电量
+    battery:number|string = '?';              // 电量
 
     userType:0|1 = 0;
     login:boolean = false;            // 是否需要登录授权
@@ -122,7 +124,22 @@
     imgUrl:string = CommonModule.imgUrl;
 
     goodsChangeChannel:number = 0;           // 商品更换货道
-    onLoadFun:boolean = true;               // onLoad 是否已运行
+    public onLoadFun:boolean = true;               // onLoad 是否已运行
+
+
+    /**
+     * 商品列表过滤
+     */
+    get goodlistFilter() {
+      let list = this.goodlist.filter((item) => {
+        if(this.userType === 0) {
+          return item.channel_status === 1;
+        } else {
+          return item
+        }
+      })
+      return list
+    }
 
     /**
      * 获取设备用户信息
@@ -190,6 +207,7 @@
       }
       getInfo(data).then(res => {
         that.goodsUpdate = false;
+        that.userType = res.data.user_type;
         if(reload) {
           that.getInfo(res)
           return
@@ -243,7 +261,18 @@
           showCancel: false
         })
         return
+      } else if (e.currentTarget.dataset.status !== 1) {
+        wx.showModal({
+          title: "提示",
+          content: '货道暂时不可用',
+          showCancel: false
+        })
+        return
       }
+      uni.showLoading({
+        title: '补货中',
+        mask: true
+      })
       let data = {
         channel: e.currentTarget.dataset.code
       }
@@ -257,10 +286,18 @@
      * 商品置换
      */
     goodChange(e:any) {
+      console.log('商品置换')
+       if(e.currentTarget.dataset.status !== 1) {
+        wx.showModal({
+          title: "提示",
+          content: '货道暂时不可用',
+          showCancel: false
+        })
+        return
+      }
       this.goodsUpdate = true;
-      this.goodsChangeChannel = e.currentTarget.dataset.code;
       wx.navigateTo({
-        url: '/pages/goods_change/index?channelId=' + e.currentTarget.dataset.channelid,
+        url: '/pages/goods_change/index?channelId=' + e.currentTarget.dataset.channelid + '&code=' + e.currentTarget.dataset.code,
       })
     }
 
@@ -287,29 +324,31 @@
     }
 
     async onLoad(options:any) {
+      //debug
+      // BluetoothModule.SET_BLUETOOTH({
+      //   launch: true,
+      //   deviceCode: 'LD2012167563',
+      //   deviceInfo: '0201070702d307018b2ff302032002042702050203069d3404ff464452'
+      // });
+      // this.userType = 1;
+      // this.getGoods();
+      // return
       this.onLoadFun = false;
 
       // 微信扫码
       // #ifdef MP-WEIXIN
-      let param = options.q;
-      if(!options.q) {
-        uni.showModal({
-          title: '提示',
-          content: '无效设备号',
-          showCancel: false,
-        })
-        this.onLoadFun = true;
-        return
-      }
-      param = decodeURIComponent(param)
-      let arr = param.split('/');
-      let id = arr[arr.length-1]
-      let { data } = await getDevcode({id});
-      options.localName = data;
+      if(options.q) {
+        let param = options.q;
+        param = decodeURIComponent(param)
+        let arr = param.split('/');
+        let id = arr[arr.length-1]
+        let { data } = await getDevcode({id});
+        options.localName = data;
+      } 
       // #endif
 
       // debug
-      // options.localName = 'LD2012167563';
+      options.localName = 'LD0517811880';
 
       console.log('首页启动', options)
       this.onLoadFun = true;
@@ -319,6 +358,7 @@
           auth: ''
         })
         this.deviceCode = options.localName
+        this.getBanner();
         this.goodlist = [];
         // #ifdef MP-ALIPAY
         reconnectBT(true);
@@ -331,6 +371,7 @@
         })
       } else if (BluetoothModule.deviceCode) {
         this.deviceCode = BluetoothModule.deviceCode
+        this.getGoods();
         this.goodsUpdate = true;
       } else {
         uni.showModal({
@@ -357,14 +398,13 @@
       if(this.goodsUpdate && BluetoothModule.auth) {
         this.getGoods();
 
+        // 商品置换后补货
         if(this.goodsChangeChannel > 0) {
-          let  e = {currentTarget: {dataset: { code: this.goodsChangeChannel }}} 
+          let  e = {currentTarget: {dataset: { code: this.goodsChangeChannel, status: 1 }}} 
           this.replenish(e);
           this.goodsChangeChannel = 0
         }
       }
-      
-      
     }
 
     onHide() {
@@ -386,6 +426,10 @@
         case 'feedback':
           console.log(e, '出货成功回调')
           if(e.value.cmd === "d2") {
+            wx.hideLoading({
+              success(res) {},
+              fail(err) {}
+            })
             this.getGoods();
           }
           break;
@@ -452,11 +496,11 @@
 }
 .goodlist .item .imgWrap{
   width: 100%;
-  // height: 270rpx;
   position: relative;
   image{
     width: 100%;
-    height: auto;
+    // height: auto;
+    height: 320rpx;
   }
   .saleOut{
     filter: grayscale(70%);

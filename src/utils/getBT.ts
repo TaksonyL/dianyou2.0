@@ -31,7 +31,6 @@ export default function () {
 
 // 货道回调
 function channelCallback(e:any) {
-  console.log(e, '货道回调');
   returnHex({
     code:  BluetoothModule.deviceCode,
     hex: AB2Hex(e.value),
@@ -39,15 +38,22 @@ function channelCallback(e:any) {
     order_id: CommonModule.orderId,
     type: BluetoothModule.returnType
   }).then((res:any) => {
-    console.log(res)
+    console.log(res, '指令解析返回')
     if(res.msg === '补货成功') {
-      // res.data.cmd = "d2"
+      writeData(res.data);
       let data = {
-        cmd: "d2"
+        cmd: "d2",
+        hex: res.data
       }
       remindPage('feedback', data)
       return
     }
+
+    if(res.msg === '货道测试完成') {
+      writeData(res.data);
+      return
+    }
+
     if(res.data.cmd === "d1" || res.data.cmd === "d2") {
       writeData(res.data.hex)
 

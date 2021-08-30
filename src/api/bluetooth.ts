@@ -18,7 +18,12 @@ export function writeData(value:string) {
  * 电池信息
  */
 export function notifyBattery() {
+  //#ifdef MP-WEIXIN
   return listenBT('0000180F-0000-1000-8000-00805F9B34FB', '00002A19-0000-1000-8000-00805F9B34FB');
+  //#endif
+  //#ifdef MP-ALIPAY
+  return listenBT('180F', '2A19');
+  //#endif
 }
 
 /**

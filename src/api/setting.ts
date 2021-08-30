@@ -44,7 +44,7 @@ export function testChannel(data:{channel:string}) {
  * @channel {string} 货道号
  */
 export function repChannel(data:{channel:string}) {
-  return request('/machine/getRepHex', data, true, 'POST')
+  return request('/machine/getRepHex', data, false, 'POST')
 }
 
 /**

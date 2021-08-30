@@ -9,7 +9,15 @@ export default function buy(data:any, price:string = '0') {
   if(!CommonModule.connect) {
     uni.showModal({
       title: '提示',
-      content: '蓝牙异常，请重连',
+      content: '蓝牙已断开，请重连',
+      showCancel: false,
+    })
+    return
+  }
+  if(BluetoothModule.battery < 5) {
+    uni.showModal({
+      title: '提示',
+      content: '设备电量不足',
       showCancel: false,
     })
     return
@@ -84,12 +92,14 @@ async function settle(json:object, provider:string) {
         },
         fail(err) {
           console.log(err, '跳转失败')
+          CommonModule.SET_PAYTIME(false);
           CommonModule.SET_PAYTIMER('clear');
         } 
       })
     },
     fail(err:any) {
       CommonModule.SET_PAYTIMER('clear');
+      CommonModule.SET_PAYTIME(false);
       uni.showToast({
         title: err,
         icon: 'none'
@@ -122,6 +132,7 @@ function orderCheck() {
           icon: 'success'
         })
         CommonModule.SET_PAYTIMER('clear');
+        CommonModule.SET_PAYTIME(false);
         await writeData(res.data.hex[0]);
       }
     }).catch(err => {

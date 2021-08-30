@@ -58,6 +58,8 @@ class Common extends VuexModule implements CommonStore {
   @Mutation
   public SET_PAYTIMER(data:any) {
     if(data === 'clear') {
+      // 清除支付监听定时器 & loading toast
+      wx.hideLoading();
       clearInterval(this.payTimer)
       this.payTimer = null
     } else {

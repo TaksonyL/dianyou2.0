@@ -18,6 +18,7 @@ interface respond {
   if(loading) {
     uni.showLoading({
       title: '加载中...',
+      mask: true
     })
   }
 

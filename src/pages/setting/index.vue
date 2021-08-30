@@ -124,7 +124,7 @@ import { reconnectBT } from '@/utils/bluetooth';
 export default class extends Vue {
   private deviceCode:any = BluetoothModule.deviceCode
   private bluetooth:boolean = false;        // 蓝牙
-  private battery:number = 100;             // 电量
+  private battery:number|string = '?';             // 电量
   private permission:boolean = true;        // 权限
 
   private dialogShow:boolean = false;
