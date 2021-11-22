@@ -4,7 +4,7 @@
 export default class Bluetooth{
   private mistake:number = 0;       // 重连次数
   private deviceId = ''             // 蓝牙设备ID
-  readonly debug:boolean = false;    // 调试模式
+  readonly debug:boolean = true;    // 调试模式
 
   protected onConnectBluetooth:Function = () => {};         // 连接回调函数
   protected onStatusBluetooth:Function = () => {};          // 状态回调函数

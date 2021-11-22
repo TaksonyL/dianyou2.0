@@ -59,6 +59,8 @@ export default class Bluetooth extends Vue {
     CommonModule.bt.getStatus((res:any) => {
       if(!res.launch && res.init) {
         this.btHandler();
+      } else if (res.launch && res.init) {
+        CommonModule.bt.reconnect();
       }
     })
     if(machineCode) this.btHandler();
