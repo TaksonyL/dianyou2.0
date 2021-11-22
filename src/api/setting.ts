@@ -73,3 +73,12 @@ export function getTimeHex(data:{hex_name:'readTiming'|'readNowTime'}) {
 export function getRestoration(data:any) {
   return request('/machine/getRestoration', data, true, 'POST')
 }
+
+/**
+ * 补货指令回调
+ * @param data {status: 补货结果 1-成功 0-失败, channel: 货道号}
+ * @returns 
+ */
+export function repReturn(data:{status:0|1, channel:string}) {
+  return request('/machine/channelRepResult', data, true, 'POST');
+}

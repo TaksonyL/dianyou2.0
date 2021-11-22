@@ -13,8 +13,8 @@
     <!-- #endif -->
 
     <!-- #ifdef MP-ALIPAY -->  
-    <!-- <button class="confirm" open-type="getAuthorize" @getAuthorize="onGetAuthorize" scope='userInfo' @error="onAuthError">知道了</button> -->
-    <button class="confirm" @click="onGetAuthorize">知道了</button>
+    <button class="confirm" open-type="getAuthorize" @getAuthorize="onGetAuthorize" scope='userInfo' @error="onAuthError">知道了</button>
+    <!-- <button class="confirm" @click="onGetAuthorize">知道了</button> -->
     <!-- #endif -->
     </view>
   </view>
@@ -22,89 +22,58 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Emit } from "vue-property-decorator";
-import { login } from '@/utils/util';
-import { getInfo } from '@/api/user';
-import { BluetoothModule } from '@/store/modules/bluetooth';
+  import { Component, Prop, Vue, Emit } from "vue-property-decorator";
+  import { CommonModule } from '@/store/modules/common';
 
-@Component
-export default class extends Vue {
-  private show:boolean = false;
-  private loading:boolean = false;
+  @Component
+	export default class extends Vue{
+    public show:boolean = false;
+    private loading:boolean = false;
 
-  getUserInfo() {
-    if(this.loading) return
-    this.loading = true
-    let that = this
-    uni.getUserProfile({
-      lang: 'zh_CN',
-      desc: '用于完善会员信息',
-      success:(res) => {
-        that.loading = false
-        uni.setStorage({
-          key: 'USER_INFO',
-          data: res.userInfo
-        });  // 存入用户信息用作登录缓存
-        that.getInfo(res.userInfo);
-      },
-      fail(err) {
-        that.loading = false
-        uni.showToast({
-          title: '授权失败',
-          icon: 'none'
-        })
+    // 获取用户信息 - weixin
+    getUserInfo() {
+      if(this.loading) return;
+      this.loading = true;
+      let that = this;
+      uni.getUserProfile({
+        lang: 'zh_CN',
+        desc: '用于完善会员信息',
+        success(res) {
+          console.log(res, '成功');
+          that.userLogin(res.userInfo)
+        },
+        fail(err) {
+          that.$dkm.tips('授权失败');
+          console.log(err, '失败');
+        },
+        complete() {
+          that.loading = false;
+        }
+      })
+    }
+
+    // 获取用户信息 - alipay
+    onGetAuthorize(e:any) {
+      this.getUserInfo();
+    }
+
+    // 用户登录
+    @Emit('login')
+    async userLogin(userInfo:any) {
+      CommonModule.SET_USERINFO(userInfo);
+      this.show = false;
+      return { userInfo }
+    }
+
+    created() {
+      let userInfo = uni.getStorageSync('USERINFO');
+      if(userInfo) {
+        this.userLogin(userInfo);
+      } else {
+        this.show = true;
       }
-    })
-  }
-
-  onGetAuthorize(e:any) {
-    if(this.loading) return
-    this.loading = true
-    this.getInfo({});
-    this.loading = false
-  }
-
-  onAuthError(e:any) {
-    uni.showToast({
-      title: "授权失败",
-      icon: 'none'
-    })
-  }
-
-
-  @Emit()
-  async getInfo(userInfo:any) {
-    let that = this;
-    let { code } = await login();
-    let data = {
-      code, 
-      machineCode: BluetoothModule.deviceCode,
-      mf_data: BluetoothModule.deviceInfo,
-      // mf_data: '0201070702d307018b2ff302032002042702050203069d3404ff464452',
-      userInfo
-    }
-    let info = await getInfo(data)
-
-    //#ifdef MP-ALIPAY
-    uni.setStorage({
-      key: 'USER_INFO',
-      data: info.data.user
-    })
-    //#endif
-
-    that.show = false
-    return info
-  }
-
-  created() {
-    let userInfo = uni.getStorageSync('USER_INFO') || null;
-    if(userInfo) {
-      this.getInfo(userInfo);
-    } else {
-      this.show = true
     }
   }
-}
 </script>
 
 <style lang="scss" scoped>

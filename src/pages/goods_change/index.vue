@@ -1,152 +1,118 @@
 <template>
-  <view>
-    <navbar :params="{title: '商品置换', return: true}"/>
+	<view class="goodsChange">
+    <Navbar :params="{title: '商品置换'}" />
+    
+    <view class="content p30">
 
-    <view class="goodlist p30">
-
-      <view class="item" v-for="(item, index) in goodlist" :key="index">
+      <view class="item" v-for="(item, index) in list" :key="index">
         <view class="imgWrap">
-          <image v-if="item.goods_pic" :src="imgUrl + item.goods_pic"></image>
-          <image v-else src="/images/product.png" mode="aspectFill"></image>
+          <DkmImage width="100%" height="100%" :src="item.goods_pic" />
         </view>
-        <view class="textWrap">
+        <view class="textWrap block-between">
           <view class="title">{{item.goods_name}}</view>
-          <view class="info">
-            <view class="price font-red">{{item.goods_retail_price}}</view>
-            <view class="btn back-red" @click="changeGood" :data-goodsId="item.goods_id">上架</view>
+          <view class="info block-between">
+            <view class="price font-color-price">{{item.goods_retail_price}}</view>
+            <view class="btn btn-color-main" @click="changeGood(item.goods_id)">上架</view>
           </view>
         </view>
       </view>
 
     </view>
-  </view>
+
+	</view>
 </template>
 
-
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
+  import { Component, Prop, Vue } from "vue-property-decorator";
+  import Navbar from '@/components/navbar/navbar.vue';
+  import DkmImage from '@/components/dkmImage/dkmImage.vue';
 
-import navbar from '@/components/navbar/navbar.vue';
+  import { getGoodsList, changeGood } from '@/api/user';
 
-import { CommonModule } from '@/store/modules/common';
-import { getGoodsList, changeGood } from '@/api/user';
-import { reconnectBT } from '@/utils/bluetooth';
-
-
-@Component({
-  components: { navbar }
-})
-export default class extends Vue{
-  private channelId:number = 0;
-  private code:number = 0;
-  private goodlist:Array<object> = [];
-  private imgUrl:string = CommonModule.imgUrl;
-
-  /**
-   * 获取商品列表
-   */
-  getGoodsList() {
-    let that = this;
-    getGoodsList({}).then(res => {
-      that.goodlist = res.data
-    })
-  }
-
-  /**
-   * 置换商品
-   */
-  changeGood(e:any) {
-    let that = this;
-    let goodsId = e.currentTarget.dataset.goodsid;
-    let data = {
-      channel_id: this.channelId,
-      goods_id:　goodsId
+  @Component({
+    components: {
+      Navbar, DkmImage
     }
-    changeGood(data).then(res => {
-      that.emitCode()
-      uni.navigateBack({})
-    })
-  }
+  })
+  export default class extends Vue{
+    public list:any[] = [];         // 商品列表
+    public channelId:number = 0;    // 货道ID
 
-  //返回补货参数
-  emitCode() {
-    let pages = getCurrentPages();
-    let prevPage = pages[pages.length - 2];
-    //@ts-ignore
-    prevPage.$vm.goodsChangeChannel = this.code
-  }
-
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad(options:any) {
-    if(options.channelId > 0) {
-      this.channelId = options.channelId
-      this.code = options.code
-    } else {
-      uni.showToast({
-        title: '暂无货道信息',
-        icon: 'none'
+    // 置换商品
+    changeGood(goodsId:number) {
+      let that = this;
+      let request = {
+        channel_id: that.channelId,
+        goods_id: goodsId
+      }
+      changeGood(request).then(res => {
+        that.$dkm.tips('操作成功', true, true);
       })
-      setTimeout(() => {
-        uni.navigateBack({});
-      }, 1000)
     }
-    this.getGoodsList();
-  }
 
-  onShow() {
-    reconnectBT();
+    // 获取商品列表
+    getGoodsList() {
+      let that = this;
+      getGoodsList({}).then(res => {
+        that.list = res.data
+      })
+    }
+
+
+    onLoad(options:any) {
+      if(options.id) {
+        this.channelId = Number(options.id);
+        this.getGoodsList();
+      } else {
+        this.$dkm.tips('参数错误', false, true);
+      }
+    }
   }
-}
 </script>
 
-
-<style lang="scss">
-.goodlist{
-  padding-bottom: 30rpx;
-}
-.goodlist .item{
-  background-color: #ffffff;
-  display: flex;
-  padding: 20rpx 30rpx;
-  border-radius: 20rpx;
-  margin-top: 20rpx;
-}
-.goodlist .item .imgWrap{
-  min-width: 200rpx;
-  height: 200rpx;
-  border-radius: 20rpx;
-  margin-right: 30rpx;
-}
-.goodlist .item .textWrap{
-  padding: 20rpx 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 100%;
-}
-.goodlist .item .textWrap .title{
-  font-size: 32rpx;
-}
-.goodlist .item .textWrap .info{
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  width: 100%;
-}
-.goodlist .item .textWrap .info .price{
-  font-size: 34rpx;
-}
-.goodlist .item .textWrap .info .price::before{
-  content: '¥';
-  font-size: 28rpx;
-}
-.goodlist .item .textWrap .info .btn{
-  text-align: center;
-  height: 50rpx;
-  line-height: 50rpx;
-  width: 120rpx;
-  border-radius: 8rpx;
+<style lang="scss" scoped>
+.goodsChange{
+  .content{
+    padding-bottom: 30rpx;
+    .item{
+      background-color: $back-color;
+      display: flex;
+      padding: 20rpx 30rpx;
+      border-radius: 20rpx;
+      margin-top: 20rpx;
+      .imgWrap{
+        min-width: 200rpx;
+        height: 200rpx;
+        border-radius: 20rpx;
+        margin-right: 30rpx;
+      }
+      .textWrap{
+        padding: 20rpx 0;
+        flex-direction: column;
+        width: 100%;
+        .title{
+          font-size: 32rpx;
+          width: 100%;
+        }
+        .info{
+          width: 100%;
+        }
+        .price{
+          font-size: 34rpx;
+          &:before{
+            content: '¥';
+            font-size: 28rpx;
+          }
+        }
+        .btn{
+          text-align: center;
+          height: 50rpx;
+          line-height: 50rpx;
+          width: 120rpx;
+          border-radius: 8rpx;
+        }
+      }
+    }
+  }
 }
 </style>

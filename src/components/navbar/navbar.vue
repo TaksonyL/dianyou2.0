@@ -29,24 +29,29 @@
     private color:string = '#333';
     private background:string = '#fff';
     private shadow:boolean = true;
-    private back:boolean = false;
+    // private back:boolean = false;
 
-    @Prop({ default:{title: '标题', return: false, class: 0, shadow: true} }) params!:paramsType;
+    @Prop({ default:{title: '标题', class: 0, shadow: true} }) params!:paramsType;
+    @Prop({ default:true }) back!:boolean;
 
     // 返回按钮 
     private goReturn() {
-      console.log('test')
-      uni.navigateBack({});
+      let pages = getCurrentPages();
+      if(pages.length > 1) {
+        uni.navigateBack({});
+      } else {
+        uni.switchTab({
+          url: '/pages/index/index'
+        });
+      }
+      
     }
     
     created() {
-      let pages = getCurrentPages();
-      this.back = this.params.return;
-      if(pages.length <= 1) this.back = false;
       if(this.params.shadow === false) this.shadow = false
       switch(this.params.class) {
         case 1:
-          this.background = '#e64240'
+          this.background = '#d7000f'
           this.color = "#fff"
           break;
       }

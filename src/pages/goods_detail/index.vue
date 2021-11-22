@@ -1,208 +1,159 @@
 <template>
-  <view>
-    <navbar :params="{title: '商品详情', return: true}"/>
+	<view class="goodsDetail">
+    <Navbar :params="{title: '商品详情'}" />
 
-    <view class="goodsImg">
-      <image v-if="goodDetail.goods_pic" :src="imgUrl + goodDetail.goods_pic" mode="aspectFill"></image>
-      <image v-else src="/static/images/product.png" mode="aspectFill"></image>
+    <view class="imgWrap" v-if="detail.goods_pic">
+      <DkmImage height="100%" :isPrefix="true" :src="detail.goods_pic"/>
     </view>
 
-    <view class="goodsWrap p30">
-      <view class="goodsHeader">
-        <view class="name">{{goodDetail.goods_name}}</view>
-        <view class="info">
-          <view class="price font-red">¥{{goodDetail.goods_retail_price}}</view>
-          <view class="stock font-gray">剩余库存：{{stock}}件</view>
-        </view>
+    <view class="textWrap p30">
+      <view class="name">{{detail.goods_name}}</view>
+      <view class="info">
+        <view class="price font-color-price"><text>{{detail.goods_retail_price}}</text>/件</view>
+        <view class="stock">剩余库存：{{stock}}件</view>
       </view>
-      <view class="goodsContent">
-        <!-- <text>商品描述：SMISS电子烟口感清新舒爽，时时刻刻展现独特风采</text> -->
-        <view class="title">商品描述</view>
-        <!-- <view>SMISS电子烟口感清新舒爽，时时刻刻展现独特风采</view> -->
-        <rich-text v-if="goodDetail.goods_desc" :nodes="goodDetail.goods_desc"></rich-text>
-        <view class="font-gray" v-else>暂无商品详细描述~</view>
+      <view class="content">
+        <u-parse v-if="detail.goods_desc" :html="detail.goods_desc"></u-parse>
+        <view class="tips" v-else>亲~暂无商品详细描述!</view>
       </view>
     </view>
 
-    <view class="footer p30">
-      <button :class="[stock === 0?  'back-gray buy' : 'back-red buy']" @click="goBuy">立即购买</button>
+    <view class="btnWrap p30">
+      <DkmButton :disable="stock === 0" text="立即购买" @click="goBuy"/>
     </view>
 
-    <adult :show="adultShow" @cancel="()=>{adultShow = false}"/>
-  </view>
+    <!-- 成人验证 -->
+    <Adult :show="adultShow" @cancel="()=>{adultShow = false}"/>
+	</view>
 </template>
 
-
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
-import navbar from '@/components/navbar/navbar.vue';
+  import { Component, Vue } from "vue-property-decorator";
+  import Navbar from '@/components/navbar/navbar.vue';
+  import DkmImage from '@/components/dkmImage/dkmImage.vue';
+  import DkmButton from '@/components/dkmButton/dkmButton.vue';
+  import Adult from '@/components/adult/adult.vue';
 
-import { CommonModule } from '@/store/modules/common';
+  import { getDetail } from '@/api/user';
+  import { CommonModule } from "@/store/modules/common";
+  import buy from '@/utils/pay';
 
-import { getDetail } from '@/api/user';
-import buy from '@/utils/buy';
-import { reconnectBT } from '@/utils/bluetooth';
-
-@Component({
-  components: { navbar }
-})
-export default class extends Vue{
-  private goodId:number|string = 0        // 商品ID
-  private channelId:number|string = 0     // 货道ID
-  private goodDetail:any = []             // 商品详情
-  private imgUrl:string = CommonModule.imgUrl
-  private adultShow:boolean = false       // 是否成人验证
-  private stock:number = 0                // 库存
-
-
-  /**
-   * 获取商品详情
-   */
-  getDetail() {
-    let that = this;
-    getDetail({id: that.goodId}).then(res => {
-      if(res.data.goods_desc) {
-        res.data.goods_desc = res.data.goods_desc.replace(/\/uploads/gi, that.imgUrl + '/uploads');
-        res.data.goods_desc = res.data.goods_desc.replace(/img/gi, 'img width="100%"');
-      }
-      that.goodDetail = res.data
-    }).catch(err => {
-      setTimeout(()=>{
-        uni.navigateBack({})
-      }, 1000)
-    })
-  }
-
-  /**
-   * 购买商品
-   */
-  goBuy() {
-    if(this.stock === 0) {
-      wx.showModal({
-        title: "提示",
-        content: "货道库存不足",
-        showCancel: false
-      })
-      return
+  @Component({
+    components: {
+      Navbar, DkmImage, DkmButton, Adult
     }
-    let adult = this.adultCheck();
-    if(adult) return;
-    let price = this.goodDetail.goods_retail_price
-    let data = {
-      goodsList: [
-        {
-          channel_id: this.channelId, 
-          goods_num: 1
+  })
+  export default class extends Vue{
+    private detail:any = {};
+    private goodId:number = 0;                  // 商品ID
+    private channelId:number = 0;               // 货道ID
+    private stock:number = 0;                   // 库存
+    private url:string = CommonModule.url;      // 根目录地址
+    private adultShow:boolean = false;          // 成人验证
+
+    // 是否有库存
+    get isStock() {
+      return this.detail.channel_stock > 0;
+    }
+
+    // 是否存于可用状态
+    get isAble() {
+      return this.detail.channel_status === 1;
+    }
+
+    // 获取商品详情
+    getDetail() {
+      let that = this;
+      getDetail({id: that.goodId}).then(res => {
+        if(res.data.goods_desc) {
+          res.data.goods_desc = res.data.goods_desc.replace(/img/gi, 'img width="100%"');
         }
-      ]
-    }
-    this.emitCode();
-    buy(data, price);
-  }
-
-  //返回补货参数
-  emitCode() {
-    let pages = getCurrentPages();
-    let prevPage = pages[pages.length - 2];
-    //@ts-ignore
-    prevPage.$vm.goodsUpdate = true
-  }
-
-
-  /**
-   * 成人验证
-   * @return {boolean} true-需要成人验证  false-不需要成人验证
-   */
-  adultCheck() {
-    if(CommonModule.adult === 2) return false;
-    let adult = CommonModule.adult === 0
-    this.adultShow = adult
-    return adult
-  }
-
-
-  onLoad(options:any) {
-    if(options.id>0 && options.channelId>0) {
-      this.goodId = options.id;
-      this.channelId = options.channelId;
-      this.stock = Number(options.stock)
-      this.getDetail();
-    } else {
-      uni.showToast({
-        title: '查无商品',
-        icon: 'none'
+        this.detail = res.data;
+        console.log(this.detail);
+      }).catch(err => {
+        that.$dkm.tips('查无商品信息', false, true);
       })
-      setTimeout(()=>{
-        uni.navigateBack({})
-      }, 1000)
+    }
+
+    // 购买商品
+    goBuy() {
+      let adult = this.adultCheck();
+      if(adult) return;
+      let that = this;
+      let data = {
+        goodsList: [
+          {
+            channel_id: that.channelId,
+            goods_num: 1
+          }
+        ]
+      }
+      buy(data, that.detail.goods_retail_price);
+    }
+
+    /**
+     * 成人验证
+     * @return {boolean} true-需要成人验证  false-不需要成人验证
+     */
+    adultCheck() {
+      if(CommonModule.adult === 2) return false;
+      let adult = CommonModule.adult === 0
+      this.adultShow = adult
+      return adult
+    }
+
+    onLoad(options:any) {
+      if(options.id) {
+        this.goodId = Number(options.id);
+        this.channelId = Number(options.channelId);
+        this.stock = Number(options.stock);
+        this.getDetail();
+      }
     }
   }
-
-  onShow() {
-    reconnectBT();
-  }
-
-}
 </script>
 
+<style lang="scss" scoped>
+.goodsDetail{
+  .imgWrap{
+    height: 660rpx;
+  }
 
-<style lang="scss">
-.goodsImg{
-  height: 665rpx;
-}
+  .textWrap{
+    padding-top: 30rpx;
+    .name{
+      font-size: 32rpx;
+    }
+    .info{
+      display: flex;
+      align-items: flex-end;
+      color: #808080;
+      line-height: 90rpx;
+      border-bottom: 1rpx solid #ccc;
+      .price{
+        font-size: 36rpx;
+        margin-right: 40rpx;
+        &:before{
+          content: '¥';
+        }
+      }
+    }
+    .content{
+      padding-top: 30rpx;
+      .tips{
+        color: #808080;
+      }
+    }
+  }
 
-.goodsWrap .goodsHeader{
-  padding: 40rpx 0 30rpx;
-  border-bottom: 1px solid #cccccc;
-}
-.goodsWrap .goodsHeader .title{
-  font-size: 32rpx;
-  color: #333;
-}
-.goodsWrap .goodsHeader .info{
-  display: flex;
-  align-items: flex-end;
-  margin-top: 20rpx;
-}
-.goodsWrap .goodsHeader .info .price{
-  font-size: 36rpx;
-}
-.goodsWrap .goodsHeader .info .price::after{
-  content: '/件';
-  color: #808080;
-  font-size: 24rpx;
-}
-.goodsWrap .goodsHeader .info .stock{
-  font-size: 24rpx;
-  margin-left: 40rpx;
-}
-.goodsWrap .goodsContent{
-  padding-top: 30rpx;
-  padding-bottom: 140rpx;
-}
-
-.goodsWrap .goodsContent .title{
-  font-size: 32rpx;
-  margin-bottom: 20rpx;
-}
-
-
-.footer{
-  position: fixed;
-  bottom: 0;
-  width: 100vw;
-  height: 120rpx;
-  background-color: #fff;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
-}
-.footer .buy{
-  width: 100%;
-  border-radius: 40rpx;
-  height: 80rpx;
-  line-height: 80rpx;
-  font-size: 32rpx;
-  font-weight: 500;
+  .btnWrap{
+    background-color: $back-color;
+    padding-top: 20rpx;
+    padding-bottom: 20rpx;
+    width: 100vw;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+  }
 }
 </style>

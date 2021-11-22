@@ -1,39 +1,28 @@
 import { goPay, pay, listenPay } from '../api/user';
-import { writeData } from '../api/bluetooth';
-import { CommonModule } from '@/store/modules/common';
+import { CommonModule } from "@/store/modules/common";
 import { getProvider } from '@/utils/util';
-import { BluetoothModule } from '@/store/modules/bluetooth';
 
-let loading = false
+let loading = false;      // 支付请求等待
+
+/**
+ * 支付聚合请求
+ * @param data 
+ * @param price 价格
+ */
 export default function buy(data:any, price:string = '0') {
-  if(!CommonModule.connect) {
-    uni.showModal({
-      title: '提示',
-      content: '蓝牙已断开，请重连',
-      showCancel: false,
-    })
-    return
-  }
-  if(BluetoothModule.battery < 5) {
-    uni.showModal({
-      title: '提示',
-      content: '设备电量不足',
-      showCancel: false,
-    })
-    return
-  }
+  let statusBt = CommonModule.bt.payCheck();
+  if(!statusBt.status) return modal(statusBt.msg)
   if(loading) return;
-  loading = true
+  loading = true;
   uni.setStorageSync('PRICE', price)
   goPay(data).then(res => {
     CommonModule.SET_ORDER({
       price,
       code: res.data.order_trade_no,
-      orderId: res.data.order_id
+      id: res.data.order_id
     })
-    BluetoothModule.SET_RETURNTYPE(1);
     pay({id: res.data.order_id}).then(async (res) => {
-      loading = false
+      loading = false;
       let { provider } = await getProvider('payment');
       let json = JSON.parse(res.data.json);
       let options = {}
@@ -54,15 +43,11 @@ export default function buy(data:any, price:string = '0') {
         break;
       }
       settle(options, provider[0]);
-    }).catch(err =>{
-      loading = false
+    }).catch(err => {
+      loading = false;
     })
-  }).catch(err => {
-    console.log(err)
-    loading = false
   })
 }
-
 
 /**
  * 发起支付
@@ -121,22 +106,38 @@ function orderCheck() {
   }
   CommonModule.SET_PAYTIME(true);
   CommonModule.SET_PAYTIMER(setInterval(()=>{
-    wx.showLoading({
+    uni.showLoading({
       title: '等待出货'
     })
     listenPay({}).then(async (res:any) => {
       if(res.code === 205) {
-        wx.hideLoading();
-        wx.showToast({
+        uni.hideLoading();
+        uni.showToast({
           title: '出货成功',
           icon: 'success'
         })
+        CommonModule.SET_GOODS_UPDATE(true);      // 需要更新商品
         CommonModule.SET_PAYTIMER('clear');
         CommonModule.SET_PAYTIME(false);
-        await writeData(res.data.hex[0]);
+        await CommonModule.bt.writeBuy(res.data.hex[0]);
       }
     }).catch(err => {
-      wx.hideLoading();
+      uni.hideLoading();
     })
   }, 2000))
+}
+
+
+/**
+ * 对话框提醒
+ * @param msg 
+ * @param title 
+ */
+ function modal (msg:string = '提示语句', title:string = '提示') {
+  uni.showModal({
+    title: title,
+    content: msg,
+    showCancel: false,
+    confirmColor: '#d7000f'
+  })
 }

@@ -1,6 +1,6 @@
 <template>
   <view>
-    <navbar :params="{title: '订单完成', shadow: false, class: 1}"/>
+    <navbar :params="{title: '订单完成', shadow: false, class: 1}"  :back="false"/>
 
     <view class="headerWrap p30">
       <view class="content">
@@ -34,9 +34,7 @@
     </view>
 
     <view class="btnWrap">
-      <!-- <navigator url="/pages/index/index" open-type="switchTab" hover-class="none"> -->
-      <view class="btn back-red" @click="goHome">返回首页</view>
-      <!-- </navigator> -->
+      <DkmButton class="btn" text="返回首页" fontSize="28" @click="goHome"/>
     </view>
   </view>
 </template>
@@ -45,18 +43,19 @@
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
 import navbar from '@/components/navbar/navbar.vue';
+import DkmButton from '@/components/dkmButton/dkmButton.vue';
 
 import { CommonModule } from '@/store/modules/common';
 import { formatTime } from '@/utils/util';
 
 @Component({
-  components: { navbar }
+  components: { navbar, DkmButton }
 })
 export default class extends Vue{
   private success:boolean = true
   private nowTime:string = ''
-  private orderCode:string = CommonModule.orderCode
-  private price:string = CommonModule.orderPrice
+  private orderCode:string = CommonModule.order.code
+  private price:string = CommonModule.order.price
 
   onLoad() {
     let date = new Date();
@@ -77,7 +76,7 @@ export default class extends Vue{
 
 <style lang="scss">
 .headerWrap{
-  background: linear-gradient(to bottom, #e64240 ,#eb6866);
+  background: linear-gradient(to bottom, $main-color ,#eb6866);
   height: 300rpx;
   box-sizing: border-box;
   padding-bottom: 100rpx;
@@ -154,7 +153,7 @@ export default class extends Vue{
 
 .btnWrap{
   text-align: center;
-  margin-top: 80rpx;
+  padding: 80rpx 100rpx 0;
 }
 .btnWrap .btn{
   display: inline-block;

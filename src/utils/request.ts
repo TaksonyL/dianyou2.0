@@ -14,7 +14,7 @@ interface respond {
  * @param {GET | POST} method 
  */
  export default function request(api:string, data:any, loading:boolean = false, method:'GET'|'POST' = 'GET'):Promise<respond>{
-  const url = 'https://cd.cdwkwh.com/miniprogram';
+  const url = CommonModule.url + '/miniprogram';
   if(loading) {
     uni.showLoading({
       title: '加载中...',
@@ -23,6 +23,7 @@ interface respond {
   }
 
   let header = {'content-type': 'application/json'};
+  
   // @ts-ignore
   if(CommonModule.session) header['Cookie'] = CommonModule.session;
 

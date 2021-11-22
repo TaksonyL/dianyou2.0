@@ -1,48 +1,69 @@
-export function formatTime(date:any) {
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const hour = date.getHours()
-  const minute = date.getMinutes()
-  const second = date.getSeconds()
-
-  return `${[year, month, day].map(formatNumber).join('-')} ${[hour, minute, second].map(formatNumber).join(':')}`
+/**
+ * 小程序Login封装
+ * @returns 
+ */
+export function login():Promise<{authResult:any, code:string, errMsg:string}> {
+  return new Promise((resolve, reject) => {
+    uni.login({
+      scopes: 'auth_user',
+      success(res) {
+        resolve(res);
+      },
+      fail(err) {
+        reject();
+      }
+    })
+  })
 }
 
-export function formatNumber(n:string | number) {
+/**
+ * 获取用户平台
+ * @param {string} service 服务类型 oauth|share|payment|push
+ */
+ export function getProvider(service:'oauth'|'share'|'payment'|'push'):Promise<{service:string, provider:string[], errMsg:string}> {
+  return new Promise((resolve, reject) => {
+    uni.getProvider({
+      service,
+      success(res) {
+        resolve(res)
+      },
+      fail(err) {
+        reject(err)
+      }
+    })
+  })
+}
+
+/**
+ * 生成时间
+ * @param date 
+ * @param form  时间格式 
+ * @returns 
+ */
+export function formatTime(date:any, form:string = 'YY-MM-DD hh:mm:ss') {
+  const year = formatNumber(date.getFullYear())
+  const month = formatNumber(date.getMonth() + 1)
+  const day = formatNumber(date.getDate())
+  const hour = formatNumber(date.getHours())
+  const minute = formatNumber(date.getMinutes())
+  const second = formatNumber(date.getSeconds())
+
+  return form.replace('YY', year).replace('MM', month).replace('DD', day).replace('hh',hour).replace('mm', minute).replace('ss', second);
+
+  // return `${[year, month, day].map(formatNumber).join('-')} ${[hour, minute, second].map(formatNumber).join(':')}`
+}
+
+function formatNumber(n:string | number) {
   n = n.toString()
   return n[1] ? n : `0${n}`
 }
 
-/**
- * ArrayBuffer to 16进制
- * @data {ArrayBuffer}
- */
-export function AB2Hex(data:ArrayBuffer) {
-  if(typeof(data) === 'string') {
-    return data;
-  }
-  return Array.prototype.map.call(new Uint8Array(data), (x) => ('00' + x.toString(16)).slice(-2)).join('');
-}
-
-/**
- * 16进制 to ArrayBuffer
- * @data {Hex}
- */
-export function Hex2AB(data:string) {
-  let arr = data.match(/[\da-f]{2}/gi);
-  if(arr === null) return;
-  return new Uint8Array(
-    arr.map(
-      (bit) => {return parseInt(bit, 16)})
-  ).buffer
-}
 
 /**
  * 16进制 to 10进制
  * @hex {Hex}
  */
-export function Hex2Int(hex:string) {
+ export function Hex2Int(hex:string) {
   var len = hex.length, 
   a = new Array(len), code;
   for (var i = 0; i < len; i++) {
@@ -61,62 +82,12 @@ export function Hex2Int(hex:string) {
 }
 
 /**
- * 10进制 to 16进制
- * @str {string}
- */
-export function Str2Hex(str:any) {
-  if(str === '') return '';
-  let hex = '';
-  for(let i in str) {
-    hex += str.charCodeAt(i).toString(16);
-  }
-  return hex;
-}
-
-/**
  * 时间 to 协议16进制
  * @time {string} 时  
  */
-export function Time2Hex(time:string | number) {
+ export function Time2Hex(time:string | number) {
   time = Number(time);
   let timeHex = time.toString(16);
   if(time < 16) timeHex = '0' + timeHex;
   return timeHex;
 }
-
-/**
- * 小程序login封装
- */
-export function login():Promise<{authResult:any, code:string, errMsg:string}> {
-  return new Promise((resolve, reject) => {
-    uni.login({
-      scopes: 'auth_user',
-      success(res) {
-        resolve(res);
-      },
-      fail(err) {
-        reject();
-      }
-    })
-  })
-}
-
-
-/**
- * 获取用户平台
- * @param {string} service 服务类型 oauth|share|payment|push
- */
-export function getProvider(service:'oauth'|'share'|'payment'|'push'):Promise<{service:string, provider:string[], errMsg:string}> {
-  return new Promise((resolve, reject) => {
-    uni.getProvider({
-      service,
-      success(res) {
-        resolve(res)
-      },
-      fail(err) {
-        reject(err)
-      }
-    })
-  })
-}
-

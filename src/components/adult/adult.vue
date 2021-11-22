@@ -154,6 +154,16 @@
         user_mobile: form.phone,
         code: form.verify
       }
+
+      let mistake = false;
+      if(!data.user_card_no) mistake =  true;
+      if(!data.user_card_name) mistake =  true;
+      if(!data.user_mobile) mistake =  true;
+      if(!data.code) mistake =  true;
+      if(mistake) {
+        return this.$dkm.modal('请输入有效信息');
+      }
+
       checkAdult(data).then((res:any) => {
         if(res.code === 200) {
           uni.showToast({
@@ -169,7 +179,7 @@
   }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .adultMask{
   position: fixed;
   width: 100vw;
