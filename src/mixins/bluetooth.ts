@@ -28,7 +28,7 @@ export default class Bluetooth extends Vue {
    */
   async onBluetooth(options:any) {
     if(options) CommonModule.REMOVE_BT();
-    options.q = 'https://zuoan.dakemakeji.com/machine/entrance/index/id/211';
+    // options.q = 'https://zuoan.dakemakeji.com/machine/entrance/index/id/211';
 
     // 微信扫码
     // #ifdef MP-WEIXIN
