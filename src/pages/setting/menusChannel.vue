@@ -18,9 +18,12 @@
   })
 	export default class extends Vue{
   private channelList:any[] = [        // 测试货道列表
+    // {name: '货道一', code: '01'}, {name: '货道二', code: '02'}, {name: '货道三', code: '03'},
+    // {name: '货道四', code: '04'}, {name: '货道五', code: '05'}, {name: '货道六', code: '06'},
+    // {name: '货道七', code: '07'}, {name: '货道八', code: '08'}, {name: '货道九', code: '09'},
     {name: '货道一', code: '01'}, {name: '货道二', code: '02'}, {name: '货道三', code: '03'},
     {name: '货道四', code: '04'}, {name: '货道五', code: '05'}, {name: '货道六', code: '06'},
-    {name: '货道七', code: '07'}, {name: '货道八', code: '08'}, {name: '货道九', code: '09'},
+    {name: '货道七', code: '07'},
   ]
 
   // 货道测试

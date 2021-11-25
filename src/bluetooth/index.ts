@@ -60,6 +60,19 @@ export class BluetoothModal extends bt {
   }
 
   /**
+   * 监听蓝牙开关回调
+   * @param fn 
+   */
+  public getSwitch(fn:Function) {
+    this.onSwithcBluetooth = (res:boolean) => {
+      if(res) {
+        // 打开蓝牙
+        fn();
+      }
+    }
+  }
+
+  /**
    * 连接后操作
    * @param authHex 验证指令
    */

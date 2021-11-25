@@ -8,6 +8,8 @@ export default class Bluetooth{
 
   protected onConnectBluetooth:Function = () => {};         // 连接回调函数
   protected onStatusBluetooth:Function = () => {};          // 状态回调函数
+  protected onSwithcBluetooth:Function = () => {};          // 蓝牙开关回调
+  protected onFindBluetooth:Function = () => {};            // 寻找设备回调函数
 
   public battery:number = 100;    // 设备电量
   public status = {             // 蓝牙模块状态
@@ -30,6 +32,15 @@ export default class Bluetooth{
     uni.onBLEConnectionStateChange((res) => {
       that.returnStatus('connect', res.connected);
     })
+    // 监听寻找设备返回
+    uni.onBluetoothDeviceFound((res) => {
+      let item = that.onFindBluetooth(res);
+      if(item) {
+        that.searchStopBluetooth();
+        that.deviceId = item.deviceId;
+        that.connectBluetooth();
+      }
+    })
   }
 
   /**
@@ -38,6 +49,7 @@ export default class Bluetooth{
    */
   protected initBluetooth() {
     let that = this;
+    
     return new Promise((resolve, reject) => {
       uni.openBluetoothAdapter({
         success(res) {
@@ -68,31 +80,39 @@ export default class Bluetooth{
         allowDuplicatesKey: false,
         interval: 0,
         success(res) {
-          that.returnStatus('find', true);
           resolve(res);
         },
         fail(err) {
-          that.returnStatus('find', false);
           reject(err)
         }
       })
     })
   }
-  
+
   /**
-   * 找到相应设备
-   * @param fn 回调函数 return 找到得设备
+   * 获取已找到设备
+   * @returns 
    */
-  protected findBluetooth(fn:Function) {
-    // 监听寻找设备返回
+  protected getSearchDevBluetooth() {
     let that = this;
-    uni.onBluetoothDeviceFound((res) => {
-      let item = fn(res);
-      if(item) {
-        that.searchStopBluetooth();
-        that.deviceId = item.deviceId;
-        that.connectBluetooth();
-      }
+    return new Promise((resolve, reject) => {
+      uni.getBluetoothDevices({
+        success(res) {
+          that.log('已找到设备', res.devices);
+
+          if(res.devices.length === 0) {
+            return that.searchBluetooth();
+          }
+          let item = that.onFindBluetooth(res);
+          if(item) {
+            that.deviceId = item.deviceId;
+            that.connectBluetooth();
+          } else {
+            that.searchBluetooth();
+          }
+          
+        }
+      })
     })
   }
 
@@ -104,8 +124,7 @@ export default class Bluetooth{
     if(!that.status.find) return
     uni.stopBluetoothDevicesDiscovery({
       success(res) {
-        that.returnStatus('find', false)
-        that.log('蓝牙搜索停止', res)
+        that.log('触发停止搜索' ,res)
       },
       fail(err) {
         that.log('蓝牙搜索停止失败', err)
@@ -144,17 +163,13 @@ export default class Bluetooth{
   }
 
 
-
   /**
    * 蓝牙重连
    * @returns 
    */
   protected reConnectBluetooth() {
-    if(this.deviceId) {
-      this.connectBluetooth();
-    } else {
-      this.searchBluetooth();
-    }
+    this.log('重连')
+    this.getSearchDevBluetooth();
   }
 
   /**
@@ -212,7 +227,6 @@ export default class Bluetooth{
           resolve(res.characteristics);
         },
         fail(err) {
-          that.modal('蓝牙异常');
           that.log('获取特征值失败', err)
           resolve([]);
         }
@@ -328,6 +342,9 @@ export default class Bluetooth{
       case 'connect':
         this.onConnectBluetooth(value);
         break;
+      case 'init':
+        this.onSwithcBluetooth(value);
+        break;
     }
 
     if(type==='init' && !value) this.modal('蓝牙关闭');
@@ -335,7 +352,7 @@ export default class Bluetooth{
       if(value) {
         uni.showLoading({
           title: '搜索设备中...',
-          mask: true
+          mask: false
         })
       } else {
         uni.hideLoading();

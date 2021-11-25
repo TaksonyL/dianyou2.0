@@ -61,7 +61,7 @@ export class BluetoothModal extends Bluetooth {
     super();
     let that = this;
     // 搜索设备规则
-    super.findBluetooth((devicesList:any) => {
+    that.onFindBluetooth = ((devicesList:any) => {
       for(let item of devicesList.devices) {
         // if(item.name === 'LJL0003431567') {
         if(item.localName === searchName) {

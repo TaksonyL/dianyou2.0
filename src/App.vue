@@ -5,6 +5,11 @@
   import Vue from 'vue';
   export default Vue.extend({
       mpType: 'app',
+      data() {
+        return {
+          isFirst: true,      // 是否首次启动
+        }
+      },
       onLaunch(options) {
         console.log('启动参数', options)
         console.log('App Launch')
@@ -60,10 +65,24 @@
 
       },
       onShow() {
-        console.log('App Show')
-        if(CommonModule.bt && !CommonModule.bt.status.connect) {
-          CommonModule.bt.reconnect();
+        let pages = getCurrentPages();
+        let page = pages[pages.length - 1];
+        if(page) {
+          console.log('App Show', page, this.isFirst)
+          let route = page.route
+          if(route !== 'pages/index/index' && CommonModule.bt && !CommonModule.bt.status.connect && !CommonModule.bt.status.find) {
+            console.log('后台切换重连');
+            CommonModule.bt.reconnect();
+          }
         }
+        // if(this.isFirst) {
+        //   this.isFirst = false;
+        // } else {
+        //   if(CommonModule.bt && !CommonModule.bt.status.connect && !CommonModule.bt.status.find) {
+        //     console.log('后台切换重连');
+        //     CommonModule.bt.reconnect();
+        //   }
+        // }
       },
       onHide() {
         console.log('App Hide')
